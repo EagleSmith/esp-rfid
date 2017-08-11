@@ -1,4 +1,6 @@
 var websock;
+var timezone;
+var devicetime;
 
 function sortTable() {
   var table, rows, switching, i, x, y, shouldSwitch;
@@ -98,21 +100,10 @@ function del() {
   }
 }
 
-function tableupdate(e) {
-  var datatosend = {};
-  datatosend.command = "userfile";
-  datatosend.uid = e.dep;
-  datatosend.user = document.getElementById(e.dep).getElementsByTagName("td")[1].innerHTML;
-  var acctype = 0;
-  if (document.getElementById(e.dep).getElementsByTagName("td")[2].getElementsByTagName("input")[0].checked) {
-    acctype = "1";
-  }
-  datatosend.acctype = acctype;
-  websock.send(JSON.stringify(datatosend));
-  websock.send("{\"command\":\"picclist\"}");
-}
 
 function update(e) {
+  var validuntil = document.getElementById("validuntil").value;
+  var vuepoch = (new Date(validuntil).getTime() / 1000) + (timezone * 60 * 60);
   var a = document.getElementById("uidinp").value;
   if (a === null || a === "") {
     alert("PICC UID cannot be empty");
@@ -123,8 +114,14 @@ function update(e) {
   datatosend.uid = document.getElementById("uidinp").value.toLowerCase();
   datatosend.user = document.getElementById("username").value;
   datatosend.acctype = document.getElementById("access").value;
+  datatosend.validuntil = vuepoch;
   websock.send(JSON.stringify(datatosend));
   websock.send("{\"command\":\"picclist\"}");
+  document.getElementById("uidinp").value = "";
+  document.getElementById("username").value = "";
+  document.getElementById("access").value = "";
+  document.getElementById("typeinp").value = "";
+  fixAdd();
 }
 
 function addRowHandlers() {
@@ -174,9 +171,6 @@ function listknownPICC(obj) {
     inp2.type = "checkbox";
     inp2.id = x + "C";
     inp2.dep = x;
-    inp2.onclick = function() {
-      tableupdate(this);
-    };
     if (obj.acctype[i] === 1) {
       row.className = "success";
       inp2.checked = true;
@@ -184,8 +178,10 @@ function listknownPICC(obj) {
       row.className = "warning";
       inp2.checked = false;
     }
+    inp2.disabled = "disabled";
     cell3.appendChild(inp2);
   }
+  websock.send("{\"command\":\"gettime\"}");
 }
 
 function start() {
@@ -201,7 +197,12 @@ function start() {
     var obj = JSON.parse(evt.data);
     if (obj.command === "piccscan") {
       listSCAN(obj);
-    } else if (obj.command === "picclist") {
+    } 
+    else if (obj.command === "gettime") {
+      timezone = obj.timezone;
+      devicetime = obj.epoch;
+    }
+    else if (obj.command === "picclist") {
       var node = document.getElementById("tablebody");
       while (node.hasChildNodes()) {
         node.removeChild(node.lastChild);

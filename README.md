@@ -9,9 +9,9 @@ You can connect to Web UI anytime to give users access or take it back. Web UI a
 
 Use case scenarios can be expanded. There are several things I want to implement. (such as limited time access, logging, record user's enter exit time, etc.)
 
-![IP](https://github.com/omersiar/esp-rfid/blob/master/demo/index.png?raw=true)
-![SP](https://github.com/omersiar/esp-rfid/blob/master/demo/settings.png?raw=true)
-![UP](https://github.com/omersiar/esp-rfid/blob/master/demo/users.png?raw=true)
+![IP](https://github.com/omersiar/esp-rfid/raw/master/demo/index.png)
+![SP](https://github.com/omersiar/esp-rfid/raw/master/demo/settings.png)
+![UP](https://github.com/omersiar/esp-rfid/raw/master/demo/users.png)
 
 ## Features
 * Using WebSocket protocol to exchange data between Hardware and Web Browser

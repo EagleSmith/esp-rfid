@@ -1,5 +1,9 @@
 var websock;
 var utcSeconds;
+var recordstorestore = 0;
+var slot = 0;
+var userdata;
+var completed = false;
 
 function listCONF(obj) {
   document.getElementById("inputtohide").value = obj.ssid;
@@ -15,8 +19,7 @@ function listCONF(obj) {
   document.getElementById("hostname").value = obj.hostnm;
   if (obj.wmode === "1") {
     document.getElementById("wmodeap").checked = true;
-  }
-  else {
+  } else {
     document.getElementById("wifibssid").value = obj.bssid;
     document.getElementById("hideBSSID").style.display = "block";
   }
@@ -27,14 +30,14 @@ function listCONF(obj) {
 }
 
 function browserTime() {
-    var today = new Date();
-    document.getElementById("rtc").innerHTML = today;
+  var today = new Date();
+  document.getElementById("rtc").innerHTML = today;
 }
 
 function deviceTime() {
-var t = new Date(0); // The 0 there is the key, which sets the date to the epoch
-t.setUTCSeconds(utcSeconds);
-var d = t.toUTCString();
+  var t = new Date(0); // The 0 there is the key, which sets the date to the epoch
+  t.setUTCSeconds(utcSeconds);
+  var d = t.toUTCString();
   document.getElementById("utc").innerHTML = d;
   utcSeconds = utcSeconds + 1;
 }
@@ -107,9 +110,8 @@ function saveConf() {
   if (document.getElementById("wmodeap").checked) {
     wmode = "1";
     datatosend.bssid = document.getElementById("wifibssid").value = 0;
-  }
-  else {
-    datatosend.bssid= document.getElementById("wifibssid").value;
+  } else {
+    datatosend.bssid = document.getElementById("wifibssid").value;
   }
   datatosend.ssid = ssid;
   datatosend.wmode = wmode;
@@ -118,7 +120,7 @@ function saveConf() {
   datatosend.rfidgain = document.getElementById("gain").value;
   datatosend.rpin = document.getElementById("gpiorly").value;
   datatosend.rtime = document.getElementById("delay").value;
-  datatosend.ntpserver =document.getElementById("ntpserver").value;
+  datatosend.ntpserver = document.getElementById("ntpserver").value;
   datatosend.ntpinterval = document.getElementById("intervals").value;
   datatosend.timezone = document.getElementById("DropDownTimezone").value;
   datatosend.hostnm = document.getElementById("hostname").value;
@@ -177,21 +179,31 @@ function restoreSet() {
   }
 }
 
-function restore1by1(n, uid, user, acc, len) {
-  setTimeout(function() {
-    var datatosend = {};
-    datatosend.command = "userfile";
-    datatosend.uid = uid;
-    datatosend.user = user;
-    datatosend.acctype = acc;
-    websock.send(JSON.stringify(datatosend));
-    var elem = document.getElementById("dynamic");
-    var part = 100 / len;
-    elem.style.width = part * n + "%";
-    if (n === len) {
-      document.getElementById("dynamic").innerHTML = "Completed";
-    }
-  }, 200 * n);
+function restore1by1(i, len, data) {
+  document.getElementById("pbar").style.display = "block";
+  var elem = document.getElementById("dynamic");
+  colorStatusbar(elem);
+  var part = 100 / len;
+  var uid, user, acc, valid;
+  var datatosend = {};
+  elem.style.width = part * (i + 1) + "%";
+  uid = data.piccs[i].slice(3);
+  user = data.users[i];
+  acc = data.acctype[i];
+  valid = data.validuntil[i];
+  datatosend.command = "userfile";
+  datatosend.uid = uid;
+  datatosend.user = user;
+  datatosend.acctype = acc;
+  datatosend.validuntil = valid;
+  websock.send(JSON.stringify(datatosend));
+  slot++;
+  if (slot === len) {
+    elem.className = "progress-bar progress-bar-success";
+    elem.innerHTML = "Completed";
+    elem.style.width = "100%";
+    completed = true;
+  }
 }
 
 function restoreUser() {
@@ -212,14 +224,9 @@ function restoreUser() {
         if (json.command === "picclist") {
           var x = confirm("File seems to be valid, do you wish to continue?");
           if (x) {
-            document.getElementById("pbar").style.display = "block";
-            var len = json.piccs.length;
-            for (var i = 1; i <= len; i++) {
-              var uid = json.piccs[i - 1].slice(3);
-              var user = json.users[i - 1];
-              var acc = json.acctype[i - 1];
-              restore1by1(i, uid, user, acc, len);
-            }
+            recordstorestore = json.piccs.length;
+            userdata = json;
+            restore1by1(slot, recordstorestore, userdata);
           }
         }
       };
@@ -229,10 +236,10 @@ function restoreUser() {
 }
 
 function colorStatusbar(ref) {
-	var percentage = ref.style.width.slice(0,-1);
-	if (percentage > 50) ref.className = "progress-bar progress-bar-success";
-	else if (percentage > 25) ref.className = "progress-bar progress-bar-warning";
-	else ref.class="progress-bar progress-bar-danger";
+  var percentage = ref.style.width.slice(0, -1);
+  if (percentage > 50) ref.className = "progress-bar progress-bar-success";
+  else if (percentage > 25) ref.className = "progress-bar progress-bar-warning";
+  else ref.class = "progress-bar progress-bar-danger";
 }
 
 function refreshStats() {
@@ -241,8 +248,6 @@ function refreshStats() {
   document.getElementById("refstat").innerHTML = "Refresh";
 }
 
-
-  
 function listStats(obj) {
   document.getElementById("chip").innerHTML = obj.chipid;
   document.getElementById("cpu").innerHTML = obj.cpu + " Mhz";
@@ -253,8 +258,8 @@ function listStats(obj) {
   document.getElementById("flash").style.width = (obj.availsize * 100) / 1044464 + "%";
   colorStatusbar(document.getElementById("flash"));
   document.getElementById("spiffs").innerHTML = obj.availspiffs + " Bytes";
-	document.getElementById("spiffs").style.width = (obj.availspiffs *100) / obj.spiffssize + "%";
-	colorStatusbar(document.getElementById("spiffs"));
+  document.getElementById("spiffs").style.width = (obj.availspiffs * 100) / obj.spiffssize + "%";
+  colorStatusbar(document.getElementById("spiffs"));
   document.getElementById("ssidstat").innerHTML = obj.ssid;
   document.getElementById("ip").innerHTML = obj.ip;
   document.getElementById("gate").innerHTML = obj.gateway;
@@ -262,9 +267,6 @@ function listStats(obj) {
   document.getElementById("dns").innerHTML = obj.dns;
   document.getElementById("mac").innerHTML = obj.mac;
 }
-
-
-
 
 function start() {
   websock = new WebSocket("ws://" + window.location.hostname + "/ws");
@@ -289,6 +291,12 @@ function start() {
       piccBackup(obj);
     } else if (obj.command === "status") {
       listStats(obj);
+    } else if (obj.command === "result") {
+      if (obj.resultof === "userfile") {
+        if (!completed && obj.result === true) {
+          restore1by1(slot, recordstorestore, userdata);
+        }
+      }
     }
   };
 }

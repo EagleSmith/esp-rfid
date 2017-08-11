@@ -147,7 +147,7 @@
             <br>
           </div>
           <div class="col-sm-6">
-            <legend>MFRC522 Hardware Settings</legend>
+            <legend>Hardware Settings</legend>
             <h6 class="text-muted">Please refer the <a href="https://github.com/omersiar/esp-rfid#pin-layout">documentation</a> for pin configuration.</h6>
             <div class="row form-group">
               <label class="col-xs-3">SPI SS</label> 
@@ -233,7 +233,7 @@
               </span>
             </div>
             <div class="row form-group">
-              <button onclick="syncBrowserTime()" class="btn btn-link btn-sm">Sync Browser Time to Device</button>
+              <div class="col-xs-3"><button onclick="syncBrowserTime()" class="btn btn-link btn-sm">Sync Browser Time to Device</button></div>
               </div>
             <div class="row form-group">
               <label class="col-xs-3">NTP Server</label> 
@@ -318,7 +318,7 @@
             </div>
             <br>
             <div id="pbar" class="progress" style="display:none">
-              <div id="dynamic" class="progress-bar progress-bar-success progress-bar-striped">Restoring...</div>
+              <div id="dynamic" class="progress-bar progress-bar-primary progress-bar-striped">Restoring...</div>
             </div>
           </div>
           <div class="col-sm-6">
